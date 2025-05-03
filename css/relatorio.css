@@ -1,0 +1,241 @@
+:root {
+  --primary-color: #000000;
+  --secondary-color: #3498db;
+  --accent-color: #e74c3c;
+  --success-color: #27ae60;
+  --light-color: #ecf0f1;
+  --dark-color: #2c3e50;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+  padding-top: 60px;
+}
+
+nav.navbar {
+  background: linear-gradient(90deg, var(--primary-color) 0%, var(--dark-color) 100%);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 0.75rem 1rem;
+}
+
+.navbar-brand {
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.navbar-brand:hover {
+  color: var(--secondary-color) !important;
+}
+
+.main-content {
+  padding: 2rem 0;
+  animation: fadeIn 0.5s ease-out;
+}
+
+h1 {
+  color: var(--primary-color);
+  margin-bottom: 2rem;
+  font-weight: 700;
+  text-align: center;
+  position: relative;
+  padding-bottom: 15px;
+}
+
+h1::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: var(--secondary-color);
+  border-radius: 2px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.filter-group select {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  background-color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 250px;
+}
+
+.filter-group select:focus {
+  border-color: var(--secondary-color);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+  outline: none;
+}
+
+.download-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.download-group button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.download-group button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.download-group button.xls {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.download-group button.xls:hover {
+  background-color: #219653;
+}
+
+.download-group button.pdf {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.download-group button.pdf:hover {
+  background-color: #c0392b;
+}
+
+#loading {
+  text-align: center;
+  padding: 2rem;
+  display: none;
+}
+
+#loading p {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+#loading::after {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(52, 152, 219, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--secondary-color);
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+#relatorioEstoque {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+#relatorioEstoque thead {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+#relatorioEstoque th {
+  padding: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+#relatorioEstoque tbody tr {
+  transition: all 0.3s ease;
+  background-color: white;
+}
+
+#relatorioEstoque tbody tr:hover {
+  background-color: #f8f9fa;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+#relatorioEstoque td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+  vertical-align: middle;
+}
+
+/* Estilo para peças em baixa */
+.baixa-estoque {
+  background-color: #fff8f8 !important;
+}
+
+.baixa-estoque td:first-child {
+  border-left: 4px solid var(--accent-color);
+}
+
+/* Estilo para peças em excesso */
+.excesso-estoque {
+  background-color: #f8fff8 !important;
+}
+
+.excesso-estoque td:first-child {
+  border-left: 4px solid var(--success-color);
+}
+
+footer {
+  background-color: var(--primary-color);
+  color: white;
+  text-align: center;
+  padding: 1.5rem;
+  margin-top: 3rem;
+}
+
+footer a {
+  color: var(--secondary-color);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-group select {
+    width: 100%;
+  }
+  
+  .download-group {
+    justify-content: center;
+  }
+}
