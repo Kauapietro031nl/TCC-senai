@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastramento de Peças</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   <link rel="stylesheet" href="../css/cadastramento.css">
+</head>
+<body>
+    <div class="container animate__animated animate__fadeIn">
+        <h1>Cadastramento de Peças</h1>
+        <div class="table-responsive">
+            <table id="tabela-pecas">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nome</th>
+                        <th>Quantidade</th>
+                        <th>Descrição</th>
+                        <th>Localização</th>
+                        <th>Valor (R$)</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="btn-container">
+            <button type="button" id="adicionar-linha" class="btn-custom">
+                <i class="fas fa-plus"></i> Adicionar Linha
+            </button>
+            <button type="button" id="cadastrar-tudo" class="btn-custom">
+                <i class="fas fa-save"></i> Cadastrar Todos
+            </button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toast-message"></span>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const tableBody = document.querySelector("#tabela-pecas tbody");
+            const addButton = document.getElementById("adicionar-linha");
+            const registerButton = document.getElementById("cadastrar-tudo");
+            const toast = document.getElementById("toast");
+            const toastMessage = document.getElementById("toast-message");
+
+            function showToast(message, type = "success") {
+                const icon = toast.querySelector("i");
+                toast.className = `toast show ${type}`;
+                toastMessage.textContent = message;
+                
+                if (type === "success") {
+                    icon.className = "fas fa-check-circle";
+                } else {
+                    icon.className = "fas fa-exclamation-circle";
+                }
+                
+                setTimeout(() => {
+                    toast.classList.remove("show");
+                }, 3000);
+            }
+
+            function adicionarLinha() {
+                const row = document.createElement("tr");
+                row.classList.add("animate__animated", "animate__fadeIn");
+                row.innerHTML = `
+                    <td>
+                        <input type="text" name="codigo" required maxlength="5" pattern=".{5}" 
+                               title="O código deve conter exatamente 5 caracteres." 
+                               placeholder="Ex: 12345">
+                    </td>
+                    <td><input type="text" name="nome" required placeholder="Nome da peça"></td>
+                    <td><input type="number" name="quantidade" required min="1" placeholder="0"></td>
+                    <td><input type="text" name="descricao" required placeholder="Descrição detalhada"></td>
+                    <td><input type="text" name="localizacao" required placeholder="Local no estoque"></td>
+                    <td><input type="number" name="valor" required min="0" step="0.01" placeholder="0.00"></td>
+                    <td><button type="button" class="remover-linha"><i class="fas fa-trash-alt"></i> Remover</button></td>
+                `;
+                tableBody.appendChild(row);
+                atualizarEventos();
+                
+                // Adiciona animação de destaque na nova linha
+                setTimeout(() => {
+                    row.classList.add("animate__pulse");
+                    setTimeout(() => {
+                        row.classList.remove("animate__pulse");
+                    }, 1000);
+                }, 100);
+            }
+
+            function verificarLinhas() {
+                if (tableBody.children.length === 0) {
+                    const emptyRow = document.createElement("tr");
+                    emptyRow.innerHTML = `
+                        <td colspan="7" class="empty-message">
+                            Nenhuma peça cadastrada. Clique em "Adicionar Linha" para começar.
+                        </td>
+                    `;
+                    tableBody.appendChild(emptyRow);
+                }
+            }
+
+            function atualizarEventos() {
+                document.querySelectorAll(".remover-linha").forEach(botao => {
+                    botao.onclick = (e) => {
+                        const row = e.target.closest("tr");
+                        row.classList.add("animate__fadeOut");
+                        setTimeout(() => {
+                            row.remove();
+                            verificarLinhas();
+                        }, 300);
+                    };
+                });
+            }
+
+            addButton.addEventListener("click", () => {
+                addButton.classList.add("animate__pulse");
+                setTimeout(() => addButton.classList.remove("animate__pulse"), 1000);
+                adicionarLinha();
+            });
+
+            registerButton.addEventListener("click", async () => {
+                // Verifica se há linhas válidas para cadastrar
+                const rows = tableBody.querySelectorAll("tr");
+                if (rows.length === 0 || (rows.length === 1 && rows[0].querySelector("td.empty-message"))) {
+                    showToast("Adicione pelo menos uma peça para cadastrar", "error");
+                    return;
+                }
+
+                // Valida todos os campos antes de enviar
+                let isValid = true;
+                const inputs = tableBody.querySelectorAll("input[required]");
+                
+                inputs.forEach(input => {
+                    if (!input.value.trim()) {
+                        input.style.borderColor = "var(--accent-color)";
+                        input.classList.add("animate__shakeX");
+                        setTimeout(() => input.classList.remove("animate__shakeX"), 1000);
+                        isValid = false;
+                    }
+                });
+
+                if (!isValid) {
+                    showToast("Preencha todos os campos obrigatórios", "error");
+                    return;
+                }
+
+                // Mostra loading no botão
+                registerButton.innerHTML = '<div class="spinner"></div> Cadastrando...';
+                registerButton.disabled = true;
+
+                const data = Array.from(rows).filter(row => !row.querySelector("td.empty-message")).map(row => ({
+                    codigo: row.querySelector("input[name='codigo']").value.trim(),
+                    nome: row.querySelector("input[name='nome']").value.trim(),
+                    quantidade: parseInt(row.querySelector("input[name='quantidade']").value),
+                    descricao: row.querySelector("input[name='descricao']").value.trim(),
+                    localizacao: row.querySelector("input[name='localizacao']").value.trim(),
+                    valor: parseFloat(row.querySelector("input[name='valor']").value)
+                }));
+
+                try {
+                    // Simula delay de rede
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    const response = await fetch("http://localhost:3000/cadastrar-pecas", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ pecas: data })
+                    });
+
+                    if (response.ok) {
+                        showToast("Peças cadastradas com sucesso!");
+                        
+                        // Animação de confirmação
+                        registerButton.innerHTML = '<i class="fas fa-check"></i> Cadastrado!';
+                        registerButton.style.backgroundColor = "var(--success-color)";
+                        
+                        // Limpa a tabela após 1 segundo
+                        setTimeout(() => {
+                            tableBody.innerHTML = "";
+                            verificarLinhas();
+                            registerButton.innerHTML = '<i class="fas fa-save"></i> Cadastrar Todos';
+                            registerButton.style.backgroundColor = "";
+                            registerButton.disabled = false;
+                        }, 1000);
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || "Erro ao cadastrar os dados");
+                    }
+                } catch (error) {
+                    console.error("Erro:", error);
+                    showToast(error.message || "Erro ao conectar com o servidor", "error");
+                    registerButton.innerHTML = '<i class="fas fa-save"></i> Cadastrar Todos';
+                    registerButton.disabled = false;
+                    
+                    // Animação de erro
+                    registerButton.classList.add("animate__shakeX");
+                    setTimeout(() => registerButton.classList.remove("animate__shakeX"), 1000);
+                }
+            });
+
+            // Inicializa a tabela
+            verificarLinhas();
+        });
+    </script>
+</body>
+</html>

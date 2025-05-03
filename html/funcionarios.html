@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Funcionários</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/funcionarios.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Gerenciamento de Funcionários</h1>
+        
+        <div class="d-flex justify-content-between mb-4">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+                Adicionar Funcionário
+            </button>
+            <div class="search-box">
+                <input type="text" id="searchInput" class="form-control" placeholder="Pesquisar funcionários...">
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="employeesTable">
+                    <!-- Dados dos funcionários serão carregados aqui via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Adicionar Funcionário -->
+    <div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-labelledby="addEmployeeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addEmployeeModalLabel">Adicionar Funcionário</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addEmployeeForm">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Senha</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveEmployeeBtn">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Funcionário -->
+    <div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editEmployeeModalLabel">Editar Funcionário</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editEmployeeForm">
+                        <input type="hidden" id="editId">
+                        <div class="mb-3">
+                            <label for="editName" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="editName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPassword" class="form-label">Nova Senha (deixe em branco para manter a atual)</label>
+                            <input type="password" class="form-control" id="editPassword">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="updateEmployeeBtn">Atualizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Visualizar Funcionário -->
+    <div class="modal fade" id="viewEmployeeModal" tabindex="-1" aria-labelledby="viewEmployeeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewEmployeeModalLabel">Detalhes do Funcionário</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">ID</label>
+                        <p id="viewId" class="form-control-static"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nome</label>
+                        <p id="viewName" class="form-control-static"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <p id="viewEmail" class="form-control-static"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar Exclusão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Tem certeza que deseja excluir este funcionário?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const employeesTable = document.getElementById('employeesTable');
+            const searchInput = document.getElementById('searchInput');
+            const saveEmployeeBtn = document.getElementById('saveEmployeeBtn');
+            const updateEmployeeBtn = document.getElementById('updateEmployeeBtn');
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        
+            const addEmployeeModal = new bootstrap.Modal(document.getElementById('addEmployeeModal'));
+            const editEmployeeModal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
+            const viewEmployeeModal = new bootstrap.Modal(document.getElementById('viewEmployeeModal'));
+            const confirmDeleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+        
+            let employeeToDelete = null;
+        
+            loadEmployees();
+        
+            async function makeRequest(endpoint, method = 'GET', data = null) {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                };
+        
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+        
+                try {
+                    const response = await fetch(`http://localhost:3000/api/${endpoint}`, options);
+        
+                    if (!response.ok) {
+                        throw new Error(`Erro na requisição: ${response.status}`);
+                    }
+        
+                    return await response.json();
+                } catch (error) {
+                    console.error('Erro:', error);
+                    alert('Ocorreu um erro ao processar a requisição.');
+                    return null;
+                }
+            }
+        
+            async function loadEmployees() {
+                const data = await makeRequest('funcionarios');
+        
+                if (data && data.success) {
+                    renderEmployees(data.employees);
+                } else {
+                    employeesTable.innerHTML = '<tr><td colspan="4" class="text-center">Erro ao carregar funcionários</td></tr>';
+                }
+            }
+        
+            function renderEmployees(employees) {
+                employeesTable.innerHTML = '';
+        
+                if (employees.length === 0) {
+                    employeesTable.innerHTML = '<tr><td colspan="4" class="text-center">Nenhum funcionário encontrado</td></tr>';
+                    return;
+                }
+        
+                employees.forEach(employee => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${employee.id}</td>
+                        <td>${employee.nome}</td>
+                        <td>${employee.email}</td>
+                        <td>
+                            <button class="btn btn-info btn-sm btn-action view-btn" data-id="${employee.id}">Ver</button>
+                            <button class="btn btn-warning btn-sm btn-action edit-btn" data-id="${employee.id}">Editar</button>
+                            <button class="btn btn-danger btn-sm btn-action delete-btn" data-id="${employee.id}">Excluir</button>
+                        </td>
+                    `;
+                    employeesTable.appendChild(row);
+                });
+        
+                addButtonEvents();
+            }
+        
+            function addButtonEvents() {
+                document.querySelectorAll('.view-btn').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        viewEmployee(id);
+                    });
+                });
+        
+                document.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        editEmployee(id);
+                    });
+                });
+        
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        confirmDelete(id);
+                    });
+                });
+            }
+        
+            async function viewEmployee(id) {
+                const data = await makeRequest(`funcionarios/${id}`);
+        
+                if (data && data.success && data.employee) {
+                    const employee = data.employee;
+                    document.getElementById('viewId').textContent = employee.id;
+                    document.getElementById('viewName').textContent = employee.nome;
+                    document.getElementById('viewEmail').textContent = employee.email;
+        
+                    viewEmployeeModal.show();
+                }
+            }
+        
+            async function editEmployee(id) {
+                const data = await makeRequest(`funcionarios/${id}`);
+        
+                if (data && data.success && data.employee) {
+                    const employee = data.employee;
+                    document.getElementById('editId').value = employee.id;
+                    document.getElementById('editName').value = employee.nome;
+                    document.getElementById('editEmail').value = employee.email;
+                    document.getElementById('editPassword').value = '';
+        
+                    editEmployeeModal.show();
+                }
+            }
+        
+            function confirmDelete(id) {
+                employeeToDelete = id;
+                confirmDeleteModal.show();
+            }
+        
+            searchInput.addEventListener('input', async function () {
+                const searchTerm = this.value.toLowerCase();
+        
+                if (searchTerm === '') {
+                    await loadEmployees();
+                    return;
+                }
+        
+                const data = await makeRequest(`funcionarios?search=${searchTerm}`);
+        
+                if (data && data.success) {
+                    renderEmployees(data.employees);
+                }
+            });
+        
+            saveEmployeeBtn.addEventListener('click', async function () {
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+        
+                if (!name || !email || !password) {
+                    alert('Por favor, preencha todos os campos!');
+                    return;
+                }
+        
+                const newEmployee = {
+                    nome: name,
+                    email: email,
+                    senha: password
+                };
+        
+                const data = await makeRequest('funcionarios', 'POST', newEmployee);
+        
+                if (data && data.success) {
+                    await loadEmployees();
+                    document.getElementById('addEmployeeForm').reset();
+                    addEmployeeModal.hide();
+                    alert('Funcionário adicionado com sucesso!');
+                }
+            });
+        
+            updateEmployeeBtn.addEventListener('click', async function () {
+                const id = parseInt(document.getElementById('editId').value);
+                const name = document.getElementById('editName').value;
+                const email = document.getElementById('editEmail').value;
+                const password = document.getElementById('editPassword').value;
+        
+                if (!name || !email) {
+                    alert('Por favor, preencha todos os campos obrigatórios!');
+                    return;
+                }
+        
+                const updatedEmployee = {
+                    nome: name,
+                    email: email
+                };
+        
+                if (password) {
+                    updatedEmployee.senha = password;
+                }
+        
+                const data = await makeRequest(`funcionarios/${id}`, 'PUT', updatedEmployee);
+        
+                if (data && data.success) {
+                    await loadEmployees();
+                    editEmployeeModal.hide();
+                    alert('Funcionário atualizado com sucesso!');
+                }
+            });
+        
+            confirmDeleteBtn.addEventListener('click', async function () {
+                if (employeeToDelete) {
+                    const data = await makeRequest(`funcionarios/${employeeToDelete}`, 'DELETE');
+        
+                    if (data && data.success) {
+                        await loadEmployees();
+                        confirmDeleteModal.hide();
+                        employeeToDelete = null;
+                        alert('Funcionário excluído com sucesso!');
+                    }
+                }
+            });
+        });
+        </script>
+        
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+</body>
+</html>

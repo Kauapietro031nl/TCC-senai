@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatBot Manual do Sistema</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/chat.css">
+</head>
+
+<body>
+    <h1><i class="fas fa-robot"></i> ChatBot - Manual do Sistema</h1>
+    
+    <div id="chat-container">
+        <div id="chat-header">
+            <i class="fas fa-robot"></i>
+            <span>Assistente Virtual</span>
+        </div>
+        
+        <div id="chat"></div>
+        
+        <div class="quick-actions">
+            <button class="quick-action-btn" data-question="Visualizar estoque"><i class="fas fa-boxes"></i> Visualizar estoque</button>
+            <button class="quick-action-btn" data-question="Como editar um produto?"><i class="fas fa-edit"></i> Editar produto</button>
+            <button class="quick-action-btn" data-question="Como cadastrar peças?"><i class="fas fa-plus-circle"></i> Cadastrar peças</button>
+            <button class="quick-action-btn" data-question="Dicas para utilização"><i class="fas fa-lightbulb"></i> Dicas</button>
+        </div>
+        
+        <div id="input-container">
+            <input type="text" id="user-input" placeholder="Digite sua dúvida sobre o sistema..." autocomplete="off">
+            <button id="send-btn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <script>
+        const chatDiv = document.getElementById("chat");
+        const userInput = document.getElementById("user-input");
+        const sendBtn = document.getElementById("send-btn");
+        const quickActionBtns = document.querySelectorAll(".quick-action-btn");
+
+        // Formatar a data para exibição
+        function formatTime(date) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Mostrar indicador de digitação
+        function showTypingIndicator() {
+            const typingDiv = document.createElement("div");
+            typingDiv.className = "typing-indicator";
+            typingDiv.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            `;
+            chatDiv.appendChild(typingDiv);
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+            return typingDiv;
+        }
+
+        // Remover indicador de digitação
+        function removeTypingIndicator(typingDiv) {
+            if (typingDiv && typingDiv.parentNode) {
+                typingDiv.parentNode.removeChild(typingDiv);
+            }
+        }
+
+        const documentationSections = {
+            "menu": {
+                title: "Menu Principal",
+                content: `Olá! Sou o Assistente do Sistema. Aqui estão os principais tópicos sobre os quais posso ajudar:<br><br>
+                <strong>Funções do Sistema:</strong>
+                <ul>
+                    <li><a href="#" class="topic-link" data-topic="Função do Sistema">Visão geral do sistema</a></li>
+                    <li><a href="#" class="topic-link" data-topic="Visualizar o Estoque">Visualizar estoque</a></li>
+                    <li><a href="#" class="topic-link" data-topic="Buscando Produtos">Buscar produtos</a></li>
+                </ul>
+                
+                <strong>Gerenciamento de Produtos:</strong>
+                <ul>
+                    <li><a href="#" class="topic-link" data-topic="Editando um Produto">Editar produto</a></li>
+                    <li><a href="#" class="topic-link" data-topic="Excluindo um Produto">Excluir produto</a></li>
+                    <li><a href="#" class="topic-link" data-topic="Baixando os Dados da tabela">Exportar dados</a></li>
+                </ul>
+                
+                <strong>Cadastro de Peças:</strong>
+                <ul>
+                    <li><a href="#" class="topic-link" data-topic="Cadastro de Peças">Visão geral</a></li>
+                    <li><a href="#" class="topic-link" data-topic="Passo a Passo para Cadastrar Peças">Passo a passo</a></li>
+                    <li><a href="#" class="topic-link" data-topic="Adicionando uma Nova Peça">Adicionar peça</a></li>
+                </ul>
+                
+                <strong>Dicas e Melhores Práticas:</strong>
+                <ul>
+                    <li><a href="#" class="topic-link" data-topic="Dicas para Utilização Eficiente">Dicas de uso</a></li>
+                </ul>
+                
+                <p>Clique em um tópico ou digite sua dúvida diretamente.</p>`,
+                isMenu: true
+            },
+            "Função do Sistema": {
+                title: "Função do Sistema",
+                content: `<strong>O Sistema de Gestão de Estoque</strong> foi desenvolvido para otimizar a gestão de inventário de produtos. Ele permite:
+                <ul>
+                    <li>Visualizar, editar, excluir e exportar dados de maneira intuitiva</li>
+                    <li>Ajudar empresas a manter o controle de seus estoques de forma organizada e prática</li>
+                    <li>Cadastrar múltiplas peças simultaneamente</li>
+                    <li>Gerar relatórios em diferentes formatos</li>
+                </ul>
+                <p>Nossa missão é proporcionar uma solução eficiente e fácil de usar para empresários e suas equipes, tornando a gestão de estoque mais ágil e precisa.</p>
+                <p><em>Dica:</em> Você pode digitar "menu" a qualquer momento para voltar aos tópicos principais.</p>`
+            },
+            "Visualizar o Estoque": {
+                title: "Visualizar o Estoque",
+                content: `A <strong>tela principal</strong> do sistema exibe uma tabela completa com todos os produtos em estoque:<br><br>
+                
+                <strong>Colunas da tabela:</strong>
+                <ul>
+                    <li><strong>Código:</strong> Identificador único do produto no estoque</li>
+                    <li><strong>Nome:</strong> Nome do produto para fácil identificação</li>
+                    <li><strong>Quantidade:</strong> Quantidade disponível no estoque</li>
+                    <li><strong>Descrição:</strong> Informações detalhadas sobre o produto</li>
+                    <li><strong>Localização:</strong> Onde o produto está armazenado no estoque</li>
+                    <li><strong>Ações:</strong> Ícones para editar (✏️) ou excluir (🗑️) o produto</li>
+                </ul>
+                
+                <p>Essa tabela proporciona uma visualização clara e rápida do estoque, facilitando o controle dos itens.</p>
+                <p><i class="fas fa-lightbulb"></i> <em>Dica rápida:</em> Use o scroll horizontal se a tabela for muito larga para sua tela.</p>`
+            },
+            "Buscando Produtos": {
+                title: "Buscando Produtos",
+                content: `A função de <strong>pesquisa</strong> permite localizar rapidamente um produto no estoque.<br><br>
+                
+                <strong>Como buscar:</strong>
+                <ol>
+                    <li>Digite o nome ou o código do produto na barra de pesquisa, localizada na parte superior da interface</li>
+                    <li>Pressione <kbd>Enter</kbd> ou clique no ícone de lupa para ver os resultados</li>
+                </ol>
+                
+                <p>A busca é <strong>eficiente e rápida</strong>, garantindo que você encontre o produto desejado em segundos, mesmo em estoques com muitos itens.</p>
+                <p><i class="fas fa-exclamation-triangle"></i> <em>Importante:</em> A busca é sensível a acentos e maiúsculas/minúsculas.</p>`
+            },
+            "Editando um Produto": {
+                title: "Editando um Produto",
+                content: `Para <strong>alterar</strong> as informações de um produto, siga estes passos:<br><br>
+                
+                <ol>
+                    <li>Clique no ícone de lápis (<i class="fas fa-pencil-alt"></i>) ao lado do produto que deseja editar</li>
+                    <li>Um formulário será exibido permitindo alterar:
+                        <ul>
+                            <li>Nome do produto</li>
+                            <li>Quantidade em estoque</li>
+                            <li>Descrição detalhada</li>
+                            <li>Localização no armazém</li>
+                        </ul>
+                    </li>
+                    <li>Após realizar as alterações, clique em <strong>Salvar</strong> para confirmar</li>
+                </ol>
+                
+                <p><i class="fas fa-info-circle"></i> <strong>Observação:</strong> O código do produto não pode ser alterado após o cadastro inicial.</p>
+                <p><i class="fas fa-lightbulb"></i> <em>Dica:</em> Você pode pressionar <kbd>Esc</kbd> para cancelar a edição.</p>`
+            },
+            "Excluindo um Produto": {
+                title: "Excluindo um Produto",
+                content: `Para <strong>remover</strong> um produto do estoque:<br><br>
+                
+                <ol>
+                    <li>Clique no ícone de lixeira (<i class="fas fa-trash-alt"></i>) ao lado do produto que deseja excluir</li>
+                    <li>O sistema exibirá uma confirmação para evitar exclusões acidentais</li>
+                    <li>Clique em <strong>Confirmar</strong> para finalizar a exclusão</li>
+                </ol>
+                
+                <p><i class="fas fa-exclamation-triangle"></i> <strong>Aviso importante:</strong> Ao excluir um produto, todas as informações relacionadas a ele serão permanentemente removidas do sistema. Esta ação não pode ser desfeita.</p>
+                <p><i class="fas fa-lightbulb"></i> <em>Sugestão:</em> Considere exportar seus dados regularmente como backup.</p>`
+            },
+            "Baixando os Dados da tabela": {
+                title: "Exportando Dados",
+                content: `Você pode <strong>exportar</strong> os dados do estoque em diferentes formatos:<br><br>
+                
+                <strong>Formatos disponíveis:</strong>
+                <ul>
+                    <li><strong>XLS (Excel):</strong> Ideal para análise e manipulação dos dados em planilhas</li>
+                    <li><strong>PDF:</strong> Perfeito para impressão ou compartilhamento de relatórios</li>
+                </ul>
+                
+                <strong>Como exportar:</strong>
+                <ol>
+                    <li>Localize os botões de exportação na parte superior da tela</li>
+                    <li>Clique no formato desejado (XLS ou PDF)</li>
+                    <li>O sistema gerará o arquivo automaticamente</li>
+                    <li>Salve o arquivo no seu computador quando solicitado</li>
+                </ol>
+                
+                <p><i class="fas fa-lightbulb"></i> <em>Dica avançada:</em> Você pode filtrar a tabela antes de exportar para gerar relatórios específicos.</p>`
+            },
+            "Dicas para Utilização Eficiente": {
+                title: "Dicas para Uso Eficiente",
+                content: `<strong>Melhores práticas</strong> para aproveitar ao máximo o sistema:<br><br>
+                
+                <ul>
+                    <li><strong>Pesquisa eficiente:</strong> Use termos específicos na busca para resultados mais rápidos</li>
+                    <li><strong>Atalhos:</strong> Pressione <kbd>Enter</kbd> para confirmar ações e <kbd>Esc</kbd> para cancelar</li>
+                    <li><strong>Organização:</strong> Mantenha os nomes dos produtos consistentes para facilitar buscas</li>
+                    <li><strong>Backup:</strong> Exporte seus dados regularmente para manter cópias de segurança</li>
+                    <li><strong>Treinamento:</strong> Capacite sua equipe para usar todas as funcionalidades do sistema</li>
+                </ul>
+                
+                <p><i class="fas fa-star"></i> <em>Dica profissional:</em> Estabeleça um padrão para códigos e localizações para manter seu estoque sempre organizado.</p>`
+            },
+            "Cadastro de Peças": {
+                title: "Cadastro de Peças",
+                content: `O sistema permite o <strong>cadastro simultâneo</strong> de várias peças. Para cada peça, informe:<br><br>
+                
+                <strong>Dados obrigatórios:</strong>
+                <ul>
+                    <li><strong>Código:</strong> Identificador único (5 caracteres)</li>
+                    <li><strong>Nome:</strong> Nome descritivo da peça</li>
+                    <li><strong>Quantidade:</strong> Número em estoque</li>
+                    <li><strong>Descrição:</strong> Detalhes sobre a peça</li>
+                    <li><strong>Localização:</strong> Onde a peça está armazenada</li>
+                </ul>
+                
+                <p>Essas informações serão enviadas para o servidor para processamento e armazenamento.</p>
+                <p><i class="fas fa-lightbulb"></i> <em>Dica:</em> Você pode cadastrar até 50 peças de uma só vez.</p>`
+            },
+            "Passo a Passo para Cadastrar Peças": {
+                title: "Passo a Passo para Cadastro",
+                content: `<strong>Fluxo completo</strong> para cadastrar peças no sistema:<br><br>
+                
+                <ol>
+                    <li>Acesse a seção <strong>"Cadastramento de Peças"</strong></li>
+                    <li>Você verá um formulário com uma tabela vazia</li>
+                    <li>Clique em <strong>"Adicionar Linha"</strong> para cada nova peça</li>
+                    <li>Preencha todos os campos obrigatórios</li>
+                    <li>Revise as informações inseridas</li>
+                    <li>Clique em <strong>"Cadastrar Todos"</strong> para enviar os dados</li>
+                </ol>
+                
+                <p><i class="fas fa-check-circle"></i> O sistema confirmará o cadastro bem-sucedido com uma mensagem.</p>
+                <p><i class="fas fa-exclamation-circle"></i> Erros serão destacados para correção antes do envio.</p>`
+            },
+            "Adicionando uma Nova Peça": {
+                title: "Adicionando uma Nova Peça",
+                content: `Para <strong>incluir</strong> uma nova peça no cadastro em lote:<br><br>
+                
+                <ol>
+                    <li>Clique no botão <strong>"Adicionar Linha"</strong></li>
+                    <li>Preencha os campos da nova linha:
+                        <ul>
+                            <li><strong>Código:</strong> 5 caracteres (letras e números)</li>
+                            <li><strong>Nome:</strong> Identificação clara da peça</li>
+                            <li><strong>Quantidade:</strong> Número inteiro positivo</li>
+                            <li><strong>Descrição:</strong> Detalhes relevantes</li>
+                            <li><strong>Localização:</strong> Setor/prateleira/box</li>
+                        </ul>
+                    </li>
+                    <li>Repita o processo para cada peça adicional</li>
+                </ol>
+                
+                <p><i class="fas fa-lightbulb"></i> <em>Dica:</em> Você pode usar o botão <strong>Tab</strong> para navegar rapidamente entre os campos.</p>`
+            },
+            "Removendo uma linha": {
+                title: "Removendo uma Linha",
+                content: `Para <strong>excluir</strong> uma linha do cadastro em lote:<br><br>
+                
+                <ol>
+                    <li>Localize a linha que deseja remover</li>
+                    <li>Clique no botão <strong>"Remover"</strong> ao lado da peça</li>
+                    <li>A linha será excluída imediatamente</li>
+                </ol>
+                
+                <p><i class="fas fa-exclamation-triangle"></i> <strong>Importante:</strong> Esta ação não pode ser desfeita. Os dados da linha serão perdidos se não tiverem sido cadastrados.</p>
+                <p><i class="fas fa-check-circle"></i> <em>Verificação:</em> Somente será possível cadastrar se todas as linhas restantes estiverem completamente preenchidas.</p>`
+            },
+            "Cadastro de Várias Peças": {
+                title: "Cadastro em Lote",
+                content: `O sistema permite o <strong>cadastro simultâneo</strong> de múltiplas peças:<br><br>
+                
+                <ul>
+                    <li>Adicione quantas linhas necessárias (até 50 por lote)</li>
+                    <li>Todas as linhas devem estar completamente preenchidas</li>
+                    <li>Você pode mesclar diferentes tipos de peças no mesmo lote</li>
+                    <li>O sistema validará todos os dados antes do cadastro</li>
+                </ul>
+                
+                <p><i class="fas fa-lightbulb"></i> <em>Dica de produtividade:</em> Prepare seus dados antecipadamente em uma planilha para agilizar o cadastro em massa.</p>
+                <p><i class="fas fa-exclamation-circle"></i> Campos em branco ou inválidos impedirão o cadastro de todo o lote.</p>`
+            },
+            "Confirmando o Cadastro": {
+                title: "Confirmando o Cadastro",
+                content: `Etapa final para <strong>armazenar</strong> as peças no sistema:<br><br>
+                
+                <ol>
+                    <li>Verifique se todas as informações estão corretas</li>
+                    <li>Clique no botão <strong>"Cadastrar Todos"</strong></li>
+                    <li>Aguarde o processamento pelo servidor</li>
+                    <li>Em caso de sucesso, você verá:
+                        <ul>
+                            <li>Mensagem de confirmação</li>
+                            <li>Limpeza automática do formulário</li>
+                            <li>Opção para iniciar novo cadastro</li>
+                        </ul>
+                    </li>
+                    <li>Se houver erros:
+                        <ul>
+                            <li>Os campos problemáticos serão destacados</li>
+                            <li>Mensagens explicativas serão exibidas</li>
+                            <li>Corrija os problemas e tente novamente</li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <p><i class="fas fa-sync-alt"></i> <em>Status:</em> O ícone de carregamento indicará quando o sistema está processando seu cadastro.</p>`
+            }
+        };
+
+        function searchDatabase(question) {
+            const normalizedQuestion = question.toLowerCase().trim();
+            
+            // Respostas diretas para cumprimentos
+            if (/^(oi|olá|ola|hello|bom dia|boa tarde|boa noite)$/i.test(normalizedQuestion)) {
+                const greetings = ["Olá!", "Oi! Como posso ajudar?", "Bom dia! Em que posso ajudar?", "Boa tarde! Pergunte sobre o sistema.", "Boa noite! Sou o assistente do sistema."];
+                return {
+                    title: "Saudação",
+                    content: greetings[Math.floor(Math.random() * greetings.length)]
+                };
+            }
+            
+            if (/^(obrigado|obrigada|valeu|agradeço)$/i.test(normalizedQuestion)) {
+                return {
+                    title: "Agradecimento",
+                    content: "De nada! Estou aqui para ajudar. Se tiver mais dúvidas, é só perguntar!"
+                };
+            }
+            
+            if (/^(menu|voltar|início|inicio|home)$/i.test(normalizedQuestion)) {
+                return documentationSections["menu"];
+            }
+            
+            if (/^(ajuda|socorro|não sei|não entendo|como funciona)$/i.test(normalizedQuestion)) {
+                return {
+                    title: "Ajuda",
+                    content: `Posso te ajudar com informações sobre o sistema de gestão de estoque. Você pode:
+                    <ul>
+                        <li>Perguntar sobre funções específicas</li>
+                        <li>Usar os botões de ação rápida abaixo da conversa</li>
+                        <li>Digitar "menu" para ver todos os tópicos</li>
+                    </ul>
+                    <p>Por exemplo, tente perguntar: "Como editar um produto?" ou "Como cadastrar várias peças?"</p>`
+                };
+            }
+
+            const keywordMap = {
+                "visualizar|estoque|ver produto|listar": "Visualizar o Estoque",
+                "editar|alterar|modificar|mudar": "Editando um Produto",
+                "excluir|remover|apagar|deletar": "Excluindo um Produto",
+                "baixar|exportar|dados|planilha|pdf|excel|xls": "Baixando os Dados da tabela",
+                "cadastrar|cadastro|registrar|nova peça": "Cadastro de Peças",
+                "passo a passo|como fazer|instruções": "Passo a Passo para Cadastrar Peças",
+                "adicionar|incluir|nova linha": "Adicionando uma Nova Peça",
+                "remover linha|excluir linha|apagar linha": "Removendo uma linha",
+                "confirmar|enviar|finalizar": "Confirmando o Cadastro",
+                "pesquisar|buscar|procurar|encontrar": "Buscando Produtos",
+                "dica|dicas|sugestão|melhor prática": "Dicas para Utilização Eficiente",
+                "função|sistema|sobre|funcionalidade": "Função do Sistema",
+                "menu|tópicos|assuntos": "menu"
+            };
+
+            for (const keywords in keywordMap) {
+                const regex = new RegExp(keywords, "i");
+                if (regex.test(normalizedQuestion)) {
+                    return documentationSections[keywordMap[keywords]];
+                }
+            }
+
+            return {
+                title: "Não entendi",
+                content: `Desculpe, não encontrei informações sobre "<strong>${question}</strong>".<br><br>
+                Você pode tentar:
+                <ul>
+                    <li>Reformular sua pergunta</li>
+                    <li>Verificar os tópicos disponíveis digitando "menu"</li>
+                    <li>Usar palavras-chave como "editar", "cadastrar" ou "exportar"</li>
+                </ul>
+                <p>Estou aqui para ajudar com dúvidas sobre o sistema de gestão de estoque.</p>`
+            };
+        }
+
+        function addMessage(message, isUser = false) {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = isUser ? "message user-message" : "message system-message";
+            
+            const now = new Date();
+            const timestamp = formatTime(now);
+            
+            if (typeof message === 'object' && message.title) {
+                messageDiv.innerHTML = `
+                    <strong>${message.title}</strong><br>
+                    ${message.content}
+                    <div class="timestamp">${timestamp}</div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    ${message}
+                    <div class="timestamp">${timestamp}</div>
+                `;
+            }
+            
+            chatDiv.appendChild(messageDiv);
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }
+
+        function handleUserInput() {
+            const question = userInput.value.trim();
+            if (!question) return;
+
+            addMessage(question, true);
+            userInput.value = "";
+            
+            const typingIndicator = showTypingIndicator();
+            
+            // Simular tempo de processamento
+            setTimeout(() => {
+                removeTypingIndicator(typingIndicator);
+                const response = searchDatabase(question);
+                addMessage(response);
+            }, 1000 + Math.random() * 1000); // Tempo aleatório entre 1-2 segundos
+        }
+
+        // Event Listeners
+        sendBtn.addEventListener("click", handleUserInput);
+        
+        userInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                handleUserInput();
+            }
+        });
+
+        quickActionBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const question = btn.getAttribute("data-question");
+                userInput.value = question;
+                handleUserInput();
+            });
+        });
+
+        // Adicionar event listener para links de tópicos (adicionado dinamicamente)
+        document.addEventListener("click", (e) => {
+            if (e.target.classList.contains("topic-link")) {
+                e.preventDefault();
+                const topic = e.target.getAttribute("data-topic");
+                addMessage(`Mostrar: ${topic}`, true);
+                
+                const typingIndicator = showTypingIndicator();
+                
+                setTimeout(() => {
+                    removeTypingIndicator(typingIndicator);
+                    const response = documentationSections[topic];
+                    addMessage(response);
+                }, 800);
+            }
+        });
+
+        // Mensagem inicial
+        setTimeout(() => {
+            addMessage(documentationSections["menu"]);
+        }, 500);
+    </script>
+</body>
+
+</html>
