@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Movimentações de Estoque</title>
+    <link rel="stylesheet" href="../css/movimentacoes-funcionarios.css">
+    
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Movimentações de Estoque</h1>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="controls">
+            <div class="search-filter">
+                <input type="text" id="searchInput" placeholder="Pesquisar...">
+                <select id="typeFilter">
+                    <option value="">Todos os Tipos</option>
+                    <option value="entrada">Entradas</option>
+                    <option value="saida">Saídas</option>
+                </select>
+                <button id="filterBtn">Filtrar</button>
+            </div>
+            <button id="refreshBtn" class="refresh-btn">Atualizar Dados</button>
+        </div>
+        
+        <div class="last-update" id="lastUpdate">
+            Última atualização: <span id="updateTime">Nunca</span>
+        </div>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+        </div>
+        
+        <table id="movementsTable">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Produto</th>
+                    <th>Descrição</th>
+                    <th>Quantidade</th>
+                    <th>Funcionário</th>
+                    <th>Observação</th>
+                    <th>Tipo</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+          
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tableBody = document.getElementById('tableBody');
+            const searchInput = document.getElementById('searchInput');
+            const typeFilter = document.getElementById('typeFilter');
+            const filterBtn = document.getElementById('filterBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const updateTime = document.getElementById('updateTime');
+            const loading = document.getElementById('loading');
+    
+            let movementsData = [];
+            let filteredData = [];
+    
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleString('pt-BR');
+            }
+    
+            async function fetchData() {
+                try {
+                    loading.style.display = 'flex';
+    
+                    const response = await fetch('http://localhost:3000/api/movimentacoes-funcionarios');
+                    const data = await response.json();
+    
+                    movementsData = data;
+                    filteredData = [...movementsData];
+                    renderTable();
+    
+                    updateTime.textContent = new Date().toLocaleString('pt-BR');
+                } catch (error) {
+                    console.error('Erro ao buscar dados:', error);
+                    alert('Erro ao carregar os dados. Por favor, tente novamente.');
+                } finally {
+                    loading.style.display = 'none';
+                }
+            }
+    
+            function renderTable() {
+                tableBody.innerHTML = '';
+    
+                if (filteredData.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Nenhuma movimentação encontrada</td></tr>';
+                    return;
+                }
+    
+                filteredData.forEach(item => {
+                    const row = document.createElement('tr');
+    
+                    row.innerHTML = `
+                        <td>${item.produto_codigo}</td>
+                        <td>${item.produto_nome}</td>
+                        <td>${item.produto_descricao}</td>
+                        <td>${item.quantidade}</td>
+                        <td>${item.funcionario_email}</td>
+                        <td>${item.observacao}</td>
+                        <td class="${item.tipo}">${item.tipo === 'entrada' ? 'Entrada' : 'Saída'}</td>
+                        <td>${formatDate(item.data_movimentacao)}</td>
+                    `;
+    
+                    tableBody.appendChild(row);
+                });
+            }
+    
+            function filterData() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const typeTerm = typeFilter.value;
+    
+                filteredData = movementsData.filter(item => {
+                    const matchesSearch = 
+                        item.produto_codigo.toLowerCase().includes(searchTerm) ||
+                        item.produto_nome.toLowerCase().includes(searchTerm) ||
+                        item.produto_descricao.toLowerCase().includes(searchTerm) ||
+                        item.funcionario_email.toLowerCase().includes(searchTerm) ||
+                        item.observacao.toLowerCase().includes(searchTerm);
+    
+                    const matchesType = typeTerm === '' || item.tipo === typeTerm;
+    
+                    return matchesSearch && matchesType;
+                });
+    
+                renderTable();
+            }
+    
+            filterBtn.addEventListener('click', filterData);
+            refreshBtn.addEventListener('click', fetchData);
+    
+            searchInput.addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    filterData();
+                }
+            });
+    
+            fetchData();
+            setInterval(fetchData, 30000);
+        });
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movimentação de Estoque</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/pagina-funcionarios.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Movimentação de Estoque</h1>
+
+        <form id="movimentacaoForm">
+            <div class="form-group">
+                <label for="funcionarioEmail">Email do Funcionário:</label>
+                <input type="email" id="funcionarioEmail" required placeholder="exemplo@empresa.com">
+                <div id="emailError" class="error-text">Por favor, insira um email válido</div>
+            </div>
+
+            <div class="form-group">
+                <label for="produtoCodigo">Código do Produto:</label>
+                <input type="text" id="produtoCodigo" required placeholder="Digite o código do produto">
+            </div>
+
+            <div id="productInfo">
+                <h3>Informações do Produto</h3>
+                <div class="product-detail"><strong>Nome:</strong> <span id="productName"></span></div>
+                <div class="product-detail"><strong>Quantidade:</strong> <span id="productQuantity"></span></div>
+                <div class="product-detail"><strong>Localização:</strong> <span id="productLocation"></span></div>
+            </div>
+
+            <div class="form-group">
+                <label for="quantidade">Quantidade:</label>
+                <input type="number" id="quantidade" min="1" required placeholder="Digite a quantidade">
+                <div id="quantityError" class="error-text">A quantidade deve ser maior que zero</div>
+            </div>
+
+            <div class="form-group">
+                <label for="tipoMovimentacao">Tipo de Movimentação:</label>
+                <select id="tipoMovimentacao" required>
+                    <option value="">Selecione...</option>
+                    <option value="entrada">Entrada</option>
+                    <option value="saida">Saída</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="observacao">Observação (opcional):</label>
+                <textarea id="observacao" rows="3" placeholder="Adicione observações relevantes"></textarea>
+            </div>
+
+            <button type="submit" id="submitButton">
+                <span id="buttonText">Registrar Movimentação</span>
+            </button>
+        </form>
+
+        <div id="successMessage" class="message">
+            Movimentação registrada com sucesso!
+        </div>
+        <div id="errorMessage" class="message">
+            Erro ao registrar movimentação. Por favor, tente novamente.
+        </div>
+    </div>
+
+    <script>
+        // Configuração da API
+        const API_BASE_URL = 'http://localhost:3000';
+
+        const form = document.getElementById('movimentacaoForm');
+        const emailInput = document.getElementById('funcionarioEmail');
+        const emailError = document.getElementById('emailError');
+        const quantityInput = document.getElementById('quantidade');
+        const quantityError = document.getElementById('quantityError');
+        const submitButton = document.getElementById('submitButton');
+        const buttonText = document.getElementById('buttonText');
+        const successMessage = document.getElementById('successMessage');
+        const errorMessage = document.getElementById('errorMessage');
+
+      
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+   
+        function showLoading(show) {
+            if (show) {
+                buttonText.innerHTML = '<span class="loading"></span> Registrando...';
+                submitButton.disabled = true;
+            } else {
+                buttonText.textContent = 'Registrar Movimentação';
+                submitButton.disabled = false;
+            }
+        }
+
+     
+        function buscarProduto(codigo) {
+            return fetch(`${API_BASE_URL}/api/produtos/${codigo}`)
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            throw new Error('Produto não encontrado');
+                        } else {
+                            throw new Error(`Erro ${response.status} ao buscar produto`);
+                        }
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data.produto) {
+                        throw new Error('Dados do produto inválidos');
+                    }
+                    return data.produto;
+                })
+                .catch(err => {
+                    console.error('Erro ao buscar produto:', err);
+                    throw err;
+                });
+        }
+
+      
+        function registrarMovimentacao(movementData) {
+            return fetch(`${API_BASE_URL}/api/movimentacao`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(movementData),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    successMessage.style.display = 'block';
+                    errorMessage.style.display = 'none';
+                    return data;
+                } else {
+                    throw data;
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao registrar movimentação:', error);
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = error.message || 'Erro ao registrar movimentação. Por favor, tente novamente.';
+                throw error;
+            });
+        }
+
+     
+        document.getElementById('produtoCodigo').addEventListener('input', async function() {
+            const code = this.value.trim();
+            const productInfo = document.getElementById('productInfo');
+            
+            if (code.length === 0) {
+                productInfo.style.display = 'none';
+                return;
+            }
+
+            try {
+                const product = await buscarProduto(code);
+                document.getElementById('productName').textContent = product.nome;
+                document.getElementById('productQuantity').textContent = product.quantidade;
+                document.getElementById('productLocation').textContent = product.localizacao;
+                productInfo.style.display = 'block';
+            } catch (error) {
+                productInfo.style.display = 'none';
+            }
+        });
+
+       
+        emailInput.addEventListener('blur', function() {
+            const email = this.value.trim();
+            if (email && !isValidEmail(email)) {
+                emailError.style.display = 'block';
+            } else {
+                emailError.style.display = 'none';
+            }
+        });
+
+        
+        quantityInput.addEventListener('input', function() {
+            const quantity = parseInt(this.value);
+            if (quantity <= 0) {
+                quantityError.style.display = 'block';
+            } else {
+                quantityError.style.display = 'none';
+            }
+        });
+
+   
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const funcionarioEmail = emailInput.value.trim();
+            const produtoCodigo = document.getElementById('produtoCodigo').value.trim();
+            const quantidade = parseInt(quantityInput.value);
+            const tipoMovimentacao = document.getElementById('tipoMovimentacao').value;
+            const observacao = document.getElementById('observacao').value.trim();
+            
+            
+            if (!funcionarioEmail || !produtoCodigo || !quantidade || !tipoMovimentacao) {
+                alert('Por favor, preencha todos os campos obrigatórios!');
+                return;
+            }
+
+            
+            if (!isValidEmail(funcionarioEmail)) {
+                emailError.style.display = 'block';
+                return;
+            } else {
+                emailError.style.display = 'none';
+            }
+
+           
+            if (quantidade <= 0) {
+                quantityError.style.display = 'block';
+                return;
+            } else {
+                quantityError.style.display = 'none';
+            }
+
+            
+            showLoading(true);
+            
+            try {
+                const produto = await buscarProduto(produtoCodigo);
+                
+             
+                if (tipoMovimentacao === 'saida' && quantidade > produto.quantidade) {
+                    throw new Error('Quantidade solicitada maior que a disponível em estoque');
+                }
+                
+                const movementData = {
+                    funcionarioEmail: funcionarioEmail,
+                    produtoCodigo: produto.codigo,
+                    quantidade: quantidade,
+                    tipoMovimentacao: tipoMovimentacao,
+                    observacao: observacao
+                };
+                
+             
+                await registrarMovimentacao(movementData);
+                
+            
+                form.reset();
+                document.getElementById('productInfo').style.display = 'none';
+            
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 5000);
+                
+            } catch (error) {
+                console.error('Erro no processo:', error);
+                if (error.message) {
+                    errorMessage.textContent = error.message;
+                }
+                errorMessage.style.display = 'block';
+                
+               
+                setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                }, 5000);
+            } finally {
+                showLoading(false);
+            }
+        });
+    </script>
+</body>
+</html>
