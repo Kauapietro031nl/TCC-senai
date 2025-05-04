@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const { findUserByEmail } = require('../repositories/loginRepository');
 
 let failedAttempts = {};
-const LOCK_TIME = 30 * 1000;
+const LOCK_TIME = 30 * 1000; // 30 segundos
 
 const login = (email, senha, callback) => {
   if (failedAttempts[email] && failedAttempts[email].blockedUntil > Date.now()) {
