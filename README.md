@@ -148,9 +148,9 @@ npm start
 ## 👥 Equipe
 
 * Kauã Pietro (Desenvolvedor)
-* João Pedro (Desenvolvedor)
+* João Pedro (Documentação)
 * Arthur Joede(Designer)
-* Thiago Vinnicius (documentação do codigo)
+* Thiago Vinnicius (Documentação)
 
 ---
 
